@@ -111,7 +111,78 @@ const workspaceSlice = createSlice({
                     )
                 } : w
             );
-        }
+        },
+        addTaskAttachment: (state, action) => {
+            const { projectId, taskId, attachment } = action.payload;
+            state.currentWorkspace.projects = state.currentWorkspace.projects.map((p) => {
+                if (p.id !== projectId) return p;
+                return {
+                    ...p,
+                    tasks: p.tasks.map((t) =>
+                        t.id === taskId
+                            ? { ...t, attachments: [...(t.attachments || []), attachment] }
+                            : t
+                    ),
+                };
+            });
+            state.workspaces = state.workspaces.map((w) =>
+                w.id === state.currentWorkspace.id
+                    ? {
+                          ...w,
+                          projects: w.projects.map((p) =>
+                              p.id === projectId
+                                  ? {
+                                        ...p,
+                                        tasks: p.tasks.map((t) =>
+                                            t.id === taskId
+                                                ? { ...t, attachments: [...(t.attachments || []), attachment] }
+                                                : t
+                                        ),
+                                    }
+                                  : p
+                          ),
+                      }
+                    : w
+            );
+        },
+        removeTaskAttachment: (state, action) => {
+            const { projectId, taskId, attachmentId } = action.payload;
+            state.currentWorkspace.projects = state.currentWorkspace.projects.map((p) => {
+                if (p.id !== projectId) return p;
+                return {
+                    ...p,
+                    tasks: p.tasks.map((t) =>
+                        t.id === taskId
+                            ? { ...t, attachments: (t.attachments || []).filter((a) => a.id !== attachmentId) }
+                            : t
+                    ),
+                };
+            });
+            state.workspaces = state.workspaces.map((w) =>
+                w.id === state.currentWorkspace.id
+                    ? {
+                          ...w,
+                          projects: w.projects.map((p) =>
+                              p.id === projectId
+                                  ? {
+                                        ...p,
+                                        tasks: p.tasks.map((t) =>
+                                            t.id === taskId
+                                                ? {
+                                                      ...t,
+                                                      attachments: (t.attachments || []).filter(
+                                                          (a) => a.id !== attachmentId
+                                                      ),
+                                                  }
+                                                : t
+                                        ),
+                                    }
+                                  : p
+                          ),
+                      }
+                    : w
+            );
+        },
 
     },
     extraReducers: (builder) => {
@@ -141,5 +212,5 @@ const workspaceSlice = createSlice({
     }
 });
 
-export const { setWorkspaces, setCurrentWorkspace, addWorkspace, updateWorkspace, deleteWorkspace, addProject, addTask, updateTask, deleteTask } = workspaceSlice.actions;
+export const { setWorkspaces, setCurrentWorkspace, addWorkspace, updateWorkspace, deleteWorkspace, addProject, addTask, updateTask, deleteTask, addTaskAttachment, removeTaskAttachment } = workspaceSlice.actions;
 export default workspaceSlice.reducer;

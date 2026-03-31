@@ -1,12 +1,14 @@
 import prisma from "../configs/prisma.js";
 import { inngest } from "../inngest/index.js";
 
+const ALLOWED_STORY_POINTS = [1, 2, 3, 5, 8, 13];
+
 // Create task
 export const createTask = async (req, res) => {
     try {
 
         const { userId } = await req.auth();
-        const { projectId, title, description, type, status, priority, assigneeId, due_date } = req.body;
+        const { projectId, title, description, type, status, priority, assigneeId, due_date, storyPoints } = req.body;
         const origin = req.get('origin');
 
         // Check if user has admin role for project
@@ -21,8 +23,20 @@ export const createTask = async (req, res) => {
         else if (project.team_lead !== userId) {
             return res.status(403).json({ message: "You don't have admin privileges for this project" });
         }
-        else if (assigneeId && !project.members.find((member) => member.user.id === assigneeId)) {
+        else if (assigneeId && !project.members.find((member) => member.user.id === assigneeId) && project.team_lead !== assigneeId) {
             return res.status(403).json({ message: "assignee is not a member of the project / workspace" });
+        }
+
+        const parsedStoryPoints =
+            storyPoints === undefined || storyPoints === null || storyPoints === ""
+                ? null
+                : Number(storyPoints);
+
+        if (
+            parsedStoryPoints !== null &&
+            (!Number.isInteger(parsedStoryPoints) || !ALLOWED_STORY_POINTS.includes(parsedStoryPoints))
+        ) {
+            return res.status(400).json({ message: "storyPoints must be one of 1, 2, 3, 5, 8, 13" });
         }
 
         const task = await prisma.task.create({
@@ -30,9 +44,10 @@ export const createTask = async (req, res) => {
                 projectId,
                 title,
                 description,
+                storyPoints: parsedStoryPoints,
                 type,
                 priority,
-                assigneeId,
+                assigneeId: assigneeId || null,
                 status,
                 due_date: new Date(due_date),
             }
@@ -40,7 +55,7 @@ export const createTask = async (req, res) => {
 
         const taskWithAssignee = await prisma.task.findUnique({
             where: { id: task.id },
-            include: { assignee: true },
+            include: { assignee: true, attachments: { include: { uploadedBy: true } } },
         });
 
         await inngest.send({
@@ -83,9 +98,31 @@ export const updateTask = async (req, res) => {
             return res.status(403).json({ message: "You don't have admin privileges for this project" });
         }
 
+        const updatePayload = { ...req.body };
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, "storyPoints")) {
+            const parsedStoryPoints =
+                updatePayload.storyPoints === undefined ||
+                    updatePayload.storyPoints === null ||
+                    updatePayload.storyPoints === ""
+                    ? null
+                    : Number(updatePayload.storyPoints);
+
+            if (
+                parsedStoryPoints !== null &&
+                (!Number.isInteger(parsedStoryPoints) || !ALLOWED_STORY_POINTS.includes(parsedStoryPoints))
+            ) {
+                return res.status(400).json({ message: "storyPoints must be one of 1, 2, 3, 5, 8, 13" });
+            }
+            updatePayload.storyPoints = parsedStoryPoints;
+        }
+
         const updatedTask = await prisma.task.update({
             where: { id: req.params.id },
-            data: req.body,
+            data: {
+                ...updatePayload,
+                assigneeId: updatePayload.assigneeId || null,
+            },
         });
 
         res.json({ message: "Task updated successfully", task: updatedTask });

@@ -56,6 +56,16 @@ export default function ProjectDetail() {
         );
     }
 
+    const totalPoints = tasks.reduce((sum, task) => sum + (task.storyPoints || 0), 0);
+    const donePoints = tasks
+        .filter((task) => task.status === "DONE")
+        .reduce((sum, task) => sum + (task.storyPoints || 0), 0);
+    const remainingPoints = Math.max(totalPoints - donePoints, 0);
+    const sprintPoints = tasks
+        .filter((task) => task.status === "IN_PROGRESS" || task.status === "DONE")
+        .reduce((sum, task) => sum + (task.storyPoints || 0), 0);
+    const sprintVelocity = sprintPoints > 0 ? ((donePoints / sprintPoints) * 100).toFixed(1) : "0.0";
+
     return (
         <div className="space-y-5 max-w-6xl mx-auto text-zinc-900 dark:text-white">
             {/* Header */}
@@ -87,6 +97,10 @@ export default function ProjectDetail() {
                     { label: "Completed", value: tasks.filter((t) => t.status === "DONE").length, color: "text-emerald-700 dark:text-emerald-400" },
                     { label: "In Progress", value: tasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "TODO").length, color: "text-amber-700 dark:text-amber-400" },
                     { label: "Team Members", value: project.members?.length || 0, color: "text-blue-700 dark:text-blue-400" },
+                    { label: "Total Points", value: totalPoints, color: "text-indigo-700 dark:text-indigo-400" },
+                    { label: "Done Points", value: donePoints, color: "text-emerald-700 dark:text-emerald-400" },
+                    { label: "Remaining Points", value: remainingPoints, color: "text-red-700 dark:text-red-400" },
+                    { label: "Sprint Velocity", value: `${sprintVelocity}%`, color: "text-cyan-700 dark:text-cyan-400" },
                 ].map((card, idx) => (
                     <div key={idx} className=" dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex justify-between sm:min-w-60 p-4 py-2.5 rounded">
                         <div>

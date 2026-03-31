@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Plus, Search, FolderOpen } from "lucide-react";
+import { Plus, Search, FolderOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import ProjectCard from "../components/ProjectCard";
 import CreateProjectDialog from "../components/CreateProjectDialog";
+
+const PAGE_SIZE = 6;
 
 export default function Projects() {
     const projects = useSelector(
@@ -12,10 +14,18 @@ export default function Projects() {
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState({
         status: "ALL",
         priority: "ALL",
     });
+
+    const totalPages = Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE));
+
+    const paginatedProjects = useMemo(() => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        return filteredProjects.slice(start, start + PAGE_SIZE);
+    }, [filteredProjects, currentPage]);
 
     const filterProjects = () => {
         let filtered = projects;
@@ -44,6 +54,15 @@ export default function Projects() {
     useEffect(() => {
         filterProjects();
     }, [projects, searchTerm, filters]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filters.status, filters.priority]);
+
+    useEffect(() => {
+        if (filteredProjects.length === 0) return;
+        setCurrentPage((p) => Math.min(p, totalPages));
+    }, [filteredProjects.length, totalPages]);
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
@@ -113,11 +132,44 @@ export default function Projects() {
                         </button>
                     </div>
                 ) : (
-                    filteredProjects.map((project) => (
+                    paginatedProjects.map((project) => (
                         <ProjectCard key={project.id} project={project} />
                     ))
                 )}
             </div>
+
+            {filteredProjects.length > PAGE_SIZE && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-zinc-700">
+                    <p className="text-sm text-gray-500 dark:text-zinc-400">
+                        Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+                        {Math.min(currentPage * PAGE_SIZE, filteredProjects.length)} of{" "}
+                        {filteredProjects.length} projects
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            disabled={currentPage <= 1}
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                            <ChevronLeft className="size-4" />
+                            Previous
+                        </button>
+                        <span className="text-sm text-gray-600 dark:text-zinc-300 tabular-nums px-2">
+                            {currentPage} / {totalPages}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={currentPage >= totalPages}
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none"
+                        >
+                            Next
+                            <ChevronRight className="size-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

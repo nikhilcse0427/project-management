@@ -42,16 +42,24 @@ export const createProject = async (req, res) => {
         });
 
         // Add members to project if they are in the workspace
+        const membersToAdd = new Set();
+
+        // Add lead to project members
+        if (teamLead) {
+            membersToAdd.add(teamLead.id);
+        }
+
         if (team_members?.length > 0) {
-            const membersToAdd = []
             workspace.members.forEach(member => {
                 if (team_members.includes(member.user.email)) {
-                    membersToAdd.push(member.user.id)
+                    membersToAdd.add(member.user.id)
                 }
             })
+        }
 
+        if (membersToAdd.size > 0) {
             await prisma.projectMember.createMany({
-                data: membersToAdd.map(memberId => ({
+                data: Array.from(membersToAdd).map(memberId => ({
                     projectId: project.id,
                     userId: memberId,
                 }))
@@ -119,7 +127,7 @@ export const updateProject = async (req, res) => {
                 end_date: end_date ? new Date(end_date) : null,
             }
         });
-        
+
         res.json({ project, message: "Project updated successfully" });
     } catch (error) {
         console.log(error);
@@ -141,7 +149,7 @@ export const addMember = async (req, res) => {
             include: { members: { include: { user: true } } },
         });
 
-                if (!project ) {
+        if (!project) {
             return res.status(404).json({ message: "Project not found" });
         }
 

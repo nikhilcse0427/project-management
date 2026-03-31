@@ -18,6 +18,7 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
     const [formData, setFormData] = useState({
         title: "",
         description: "",
+        storyPoints: "",
         type: "TASK",
         status: "TODO",
         priority: "MEDIUM",
@@ -36,6 +37,7 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
             setFormData({
                 title: "",
                 description: "",
+                storyPoints: "",
                 type: "TASK",
                 status: "TODO",
                 priority: "MEDIUM",
@@ -44,7 +46,7 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
             });
 
             toast.success(data.message);
-            dispatch(addTask(data.task));
+            dispatch(addTask({ ...data.task, attachments: data.task.attachments ?? [] }));
         } catch (error) {
             toast.error(error?.response?.data?.message || error.message);
         } finally {
@@ -91,10 +93,26 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
                                 <option value="HIGH">High</option>
                             </select>
                         </div>
+
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium">Story Points</label>
+                            <select
+                                value={formData.storyPoints}
+                                onChange={(e) => setFormData({ ...formData, storyPoints: e.target.value })}
+                                className="w-full rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 text-sm mt-1"
+                            >
+                                <option value="">None</option>
+                                {[1, 2, 3, 5, 8, 13].map((point) => (
+                                    <option key={point} value={point}>
+                                        {point}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Assignee and Status */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <label className="text-sm font-medium">Assignee</label>
                             <select value={formData.assigneeId} onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })} className="w-full rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 text-sm mt-1" >
@@ -115,6 +133,7 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
                                 <option value="DONE">Done</option>
                             </select>
                         </div>
+
                     </div>
 
                     {/* Due Date */}

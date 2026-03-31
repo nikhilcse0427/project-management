@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import './dns-config.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import workspaceRouter from "./routes/workspaceRoutes.js";
@@ -11,9 +14,11 @@ import { inngest, functions } from './inngest/index.js';
 import { serve } from "inngest/express";
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
 app.use(cors());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(clerkMiddleware());
 
 app.get('/', (req, res) => res.send('Server is live!'));
