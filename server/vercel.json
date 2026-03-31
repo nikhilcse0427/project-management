@@ -13,19 +13,15 @@
     ],
     "headers": [
         {
-            "source": "/api/(.*)",
+            "source": "/(.*)",
             "headers": [
                 {
-                    "key": "Access-Control-Allow-Credentials",
-                    "value": "true"
-                },
-                {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://project-management-nqi6.vercel.app"
+                    "value": "*"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
-                    "value": "GET,DELETE,PATCH,POST,PUT"
+                    "value": "GET, POST, PUT, DELETE, OPTIONS"
                 },
                 {
                     "key": "Access-Control-Allow-Headers",
@@ -36,7 +32,7 @@
     ],
     "routes": [
         {
-            "src": "/(.*)",
+            "src": "./(.*)",
             "dest": "server.js"
         }
     ]
