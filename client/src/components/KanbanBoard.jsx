@@ -87,7 +87,7 @@ export default function KanbanBoard({ tasks }) {
                     }`}
                 >
                   {tasks
-                    .filter((task) => task.status === column.id)
+                    .filter((task) => task.status === column.id && !task.parentTaskId)
                     .map((task, index) => (
                       <Draggable key={task.id} draggableId={task.id} index={index}>
                         {(provided, snapshot) => (

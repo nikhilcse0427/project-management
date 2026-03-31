@@ -18,6 +18,7 @@ export const getUserWorkspaces = async (req, res) => {
                                 assignee: true,
                                 comments: { include: { user: true } },
                                 attachments: { include: { uploadedBy: true } },
+                                subTasks: { include: { assignee: true } },
                             },
                         },
                         members: { include: { user: true } }
