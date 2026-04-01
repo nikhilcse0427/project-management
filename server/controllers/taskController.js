@@ -8,7 +8,7 @@ export const createTask = async (req, res) => {
     try {
 
         const { userId } = await req.auth();
-        const { projectId, title, description, type, status, priority, assigneeId, due_date, storyPoints, parentTaskId } = req.body;
+        const { projectId, title, description, type, status, priority, assigneeId, due_date, storyPoints } = req.body;
         const origin = req.get('origin');
 
         // Check if user has admin role for project
@@ -48,7 +48,6 @@ export const createTask = async (req, res) => {
                 type,
                 priority,
                 assigneeId: assigneeId || null,
-                parentTaskId: parentTaskId || null,
                 status,
                 due_date: new Date(due_date),
             }
@@ -56,7 +55,7 @@ export const createTask = async (req, res) => {
 
         const taskWithAssignee = await prisma.task.findUnique({
             where: { id: task.id },
-            include: { assignee: true, attachments: { include: { uploadedBy: true } }, subTasks: { include: { assignee: true } } },
+            include: { assignee: true, attachments: { include: { uploadedBy: true } } },
         });
 
         await inngest.send({

@@ -31,15 +31,6 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
         setIsSubmitting(true);
 
         try {
-            if (!formData.assigneeId) {
-                setIsSubmitting(false);
-                return toast.error("Please select an assignee");
-            }
-            if (!formData.due_date) {
-                setIsSubmitting(false);
-                return toast.error("Please select a due date");
-            }
-
             const { data } = await api.post("/api/tasks", { ...formData, workspaceId: currentWorkspace.id, projectId }, { headers: { Authorization: `Bearer ${await getToken()}` } });
 
             setShowCreateTask(false);

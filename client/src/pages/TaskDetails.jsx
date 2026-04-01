@@ -15,8 +15,7 @@ import {
     ExternalLink,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { addTaskAttachment, removeTaskAttachment, updateTask, addTask } from "../features/workspaceSlice";
-import { CheckCircle2, Circle, ListPlus } from "lucide-react";
+import { addTaskAttachment, removeTaskAttachment } from "../features/workspaceSlice";
 
 const fileBaseUrl = import.meta.env.VITE_BASEURL || "";
 
@@ -45,8 +44,6 @@ const TaskDetails = () => {
     const [linkTitle, setLinkTitle] = useState("");
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
-    const [isAddingSubtask, setIsAddingSubtask] = useState(false);
-    const [subtaskTitle, setSubtaskTitle] = useState("");
 
     const attachments = task?.attachments ?? [];
 
@@ -140,57 +137,6 @@ const TaskDetails = () => {
         }
     };
 
-    const handleAddSubtask = async (e) => {
-        e.preventDefault();
-        if (!subtaskTitle.trim() || !task?.id) return;
-
-        try {
-            toast.loading("Adding sub-task...");
-            const token = await getToken();
-            const { data } = await api.post(
-                "/api/tasks",
-                {
-                    projectId: task.projectId,
-                    title: subtaskTitle.trim(),
-                    description: "",
-                    type: "TASK",
-                    status: "TODO",
-                    priority: "MEDIUM",
-                    due_date: task.due_date,
-                    parentTaskId: task.id,
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            dispatch(addTask(data.task));
-            setSubtaskTitle("");
-            setIsAddingSubtask(false);
-            toast.dismissAll();
-            toast.success("Sub-task added.");
-        } catch (error) {
-            toast.dismissAll();
-            toast.error(error?.response?.data?.message || error.message);
-        }
-    };
-
-    const toggleSubtaskStatus = async (subtask) => {
-        const newStatus = subtask.status === "DONE" ? "TODO" : "DONE";
-        try {
-            toast.loading("Updating sub-task...");
-            const token = await getToken();
-            const { data } = await api.put(
-                `/api/tasks/${subtask.id}`,
-                { status: newStatus },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            dispatch(updateTask(data.task));
-            toast.dismissAll();
-        } catch (error) {
-            toast.dismissAll();
-            toast.error(error?.response?.data?.message || error.message);
-        }
-    };
-
     const onDrop = useCallback(
         (e) => {
             e.preventDefault();
@@ -239,8 +185,9 @@ const TaskDetails = () => {
                                 {comments.map((comment) => (
                                     <div
                                         key={comment.id}
-                                        className={`sm:max-w-4/5 dark:bg-gradient-to-br dark:from-zinc-800 dark:to-zinc-900 border border-gray-300 dark:border-zinc-700 p-3 rounded-md ${comment.user.id === user?.id ? "ml-auto" : "mr-auto"
-                                            }`}
+                                        className={`sm:max-w-4/5 dark:bg-gradient-to-br dark:from-zinc-800 dark:to-zinc-900 border border-gray-300 dark:border-zinc-700 p-3 rounded-md ${
+                                            comment.user.id === user?.id ? "ml-auto" : "mr-auto"
+                                        }`}
                                     >
                                         <div className="flex items-center gap-2 mb-1 text-sm text-gray-500 dark:text-zinc-400">
                                             <img src={comment.user.image} alt="avatar" className="size-5 rounded-full" />
@@ -339,10 +286,11 @@ const TaskDetails = () => {
                                 if (e.currentTarget === e.target) setDragOver(false);
                             }}
                             onDrop={onDrop}
-                            className={`rounded-md border-2 border-dashed px-4 py-8 text-center text-sm transition-colors mb-4 ${dragOver
+                            className={`rounded-md border-2 border-dashed px-4 py-8 text-center text-sm transition-colors mb-4 ${
+                                dragOver
                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
                                     : "border-gray-300 dark:border-zinc-600 text-gray-500 dark:text-zinc-400"
-                                }`}
+                            }`}
                         >
                             <Upload className="size-8 mx-auto mb-2 opacity-60" />
                             <p className="font-medium text-gray-700 dark:text-zinc-300">Drag & drop files here</p>
@@ -431,80 +379,6 @@ const TaskDetails = () => {
                                             >
                                                 <Trash2 className="size-4" />
                                             </button>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-
-                    {/* Sub-tasks Section */}
-                    <div className="mt-6 border border-gray-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/80 dark:bg-zinc-800/40">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
-                                <ListPlus className="size-4" />
-                                Sub-tasks ({task.subTasks?.length || 0})
-                            </h3>
-                            <button
-                                onClick={() => setIsAddingSubtask(!isAddingSubtask)}
-                                className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline"
-                            >
-                                {isAddingSubtask ? "Cancel" : "+ Add sub-task"}
-                            </button>
-                        </div>
-
-                        {isAddingSubtask && (
-                            <form onSubmit={handleAddSubtask} className="mb-4 flex gap-2">
-                                <input
-                                    type="text"
-                                    value={subtaskTitle}
-                                    onChange={(e) => setSubtaskTitle(e.target.value)}
-                                    placeholder="Sub-task title..."
-                                    className="flex-1 rounded-md dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 px-3 py-1.5 text-sm"
-                                    autoFocus
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md shadow-sm hover:bg-blue-700"
-                                >
-                                    Add
-                                </button>
-                            </form>
-                        )}
-
-                        {task.subTasks?.length === 0 ? (
-                            <p className="text-xs text-gray-500 dark:text-zinc-500">No sub-tasks yet.</p>
-                        ) : (
-                            <ul className="space-y-2">
-                                {task.subTasks?.map((subtask) => (
-                                    <li
-                                        key={subtask.id}
-                                        className="flex items-center gap-3 p-2 rounded-md hover:bg-white dark:hover:bg-zinc-900 border border-transparent hover:border-gray-200 dark:hover:border-zinc-700 transition"
-                                    >
-                                        <button
-                                            onClick={() => toggleSubtaskStatus(subtask)}
-                                            className="focus:outline-none"
-                                        >
-                                            {subtask.status === "DONE" ? (
-                                                <CheckCircle2 className="size-4 text-emerald-500" />
-                                            ) : (
-                                                <Circle className="size-4 text-gray-400" />
-                                            )}
-                                        </button>
-                                        <span
-                                            className={`text-sm flex-1 ${subtask.status === "DONE"
-                                                    ? "line-through text-gray-400 dark:text-zinc-600"
-                                                    : "text-gray-700 dark:text-zinc-300"
-                                                }`}
-                                        >
-                                            {subtask.title}
-                                        </span>
-                                        {subtask.assignee && (
-                                            <img
-                                                src={subtask.assignee.image}
-                                                className="size-5 rounded-full"
-                                                alt="subtask assignee"
-                                            />
                                         )}
                                     </li>
                                 ))}

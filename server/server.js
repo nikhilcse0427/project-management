@@ -17,12 +17,7 @@ const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
-app.use(cors({
-  origin: ["http://localhost:5173", "https://project-management-nqi6.vercel.app"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+app.use(cors());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(clerkMiddleware());
 
@@ -39,8 +34,4 @@ app.use("/api/comments", protect, commentRouter);
 
 const PORT = process.env.PORT || 5000;
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
-
-export default app;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

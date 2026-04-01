@@ -44,7 +44,6 @@ const ProjectTasks = ({ tasks }) => {
         return tasks.filter((task) => {
             const { status, type, priority, assignee } = filters;
             return (
-                !task.parentTaskId &&
                 (!status || task.status === status) &&
                 (!type || task.type === type) &&
                 (!priority || task.priority === priority) &&
